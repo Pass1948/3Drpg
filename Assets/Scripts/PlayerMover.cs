@@ -10,12 +10,14 @@ public class PlayerMover : MonoBehaviour
     private float ySpeed;
     private Animator animator;
     private bool walk;
+    private float curSpeed;
+    [SerializeField] bool debug;
 
     [SerializeField] float walkSpeed;
     [SerializeField] float runSpeed;
-    private float curSpeed;
-    [SerializeField] float JumpSpeed;
-    
+    [SerializeField] float jumpSpeed;
+    [SerializeField] float walkStepRange;
+    [SerializeField] float runStepRange;
 
     private void Awake()
     {
@@ -28,6 +30,8 @@ public class PlayerMover : MonoBehaviour
         Move();
         Fall();
     }
+
+    float lastStepTime = 0.5f;
 
     private void Move()
     {
@@ -57,6 +61,24 @@ public class PlayerMover : MonoBehaviour
 
         Quaternion lookRotation = Quaternion.LookRotation(vecFor * moveDir.z + vecRig * moveDir.x);
         transform.rotation = Quaternion.Lerp( lookRotation, transform.rotation, 0.1f);
+
+        lastStepTime -= Time.time;
+        if ( lastStepTime < 0)
+        {
+            lastStepTime = 0.5f;
+            GenerateFootStepSound();
+        }
+    }
+
+    private void GenerateFootStepSound()
+    {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, walk ? walkStepRange : runStepRange);
+        foreach(Collider collider in colliders)
+        {
+            IListenable listenable = collider.GetComponent<IListenable>();
+            listenable?.Listen(transform);
+        }
+
     }
 
     private void OnMove(InputValue value) 
@@ -79,7 +101,7 @@ public class PlayerMover : MonoBehaviour
 
     private void Jump() 
     {
-        ySpeed = JumpSpeed;
+        ySpeed = jumpSpeed;
     }
 
     private void OnJump (InputValue value)
@@ -90,5 +112,15 @@ public class PlayerMover : MonoBehaviour
     private void OnWalk(InputValue value)
     {
         walk = value.isPressed;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!debug)
+            return;
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, walkStepRange);
+        Gizmos.DrawWireSphere(transform.position, runStepRange);
+
     }
 }

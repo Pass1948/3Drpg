@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public interface IHitable
 {
-   
+    public void TakeHit(int damage);
 }
